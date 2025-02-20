@@ -10,7 +10,6 @@ class MusicCog(commands.Cog):
         self.queues = {}         # Menyimpan antrian lagu per guild
 
     async def ensure_voice(self, ctx):
-        """Pastikan bot terhubung ke voice channel."""
         if ctx.author.voice:
             channel = ctx.author.voice.channel
             if ctx.guild.id not in self.voice_clients or not self.voice_clients[ctx.guild.id].is_connected():
@@ -23,24 +22,21 @@ class MusicCog(commands.Cog):
 
     @commands.command(name="join")
     async def join(self, ctx):
-        """Bot bergabung ke voice channel."""
         await self.ensure_voice(ctx)
-        await ctx.send("🎵 Joined the voice channel!")
+        await ctx.send("🎵 Luna has joined the voice channel!")
 
     @commands.command(name="leave")
     async def leave(self, ctx):
-        """Bot keluar dari voice channel."""
         if ctx.guild.id in self.voice_clients:
             await self.voice_clients[ctx.guild.id].disconnect()
             del self.voice_clients[ctx.guild.id]
             self.queues.pop(ctx.guild.id, None)
-            await ctx.send("👋 Left the voice channel!")
+            await ctx.send("👋 Luna has left the voice channel!")
         else:
             await ctx.send("❌ I'm not in a voice channel!")
 
     @commands.command(name="play")
     async def play(self, ctx, *, search: str):
-        """Memutar musik dari YouTube atau menambahkan ke antrian."""
         vc = await self.ensure_voice(ctx)
         if not vc:
             return
@@ -48,11 +44,11 @@ class MusicCog(commands.Cog):
         ydl_opts = {'format': 'bestaudio/best', 'quiet': True, 'extractaudio': True}
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(f"ytsearch:{search}", download=False)
-            if not info.get("entries"):
+            if 'entries' not in info or not info['entries']:
                 await ctx.send("❌ No results found.")
                 return
-            url = info["entries"][0]["url"]
-            title = info["entries"][0]["title"]
+            url = info['entries'][0]['url']
+            title = info['entries'][0]['title']
 
         if ctx.guild.id not in self.queues:
             self.queues[ctx.guild.id] = []
@@ -65,7 +61,6 @@ class MusicCog(commands.Cog):
             await self.play_next(ctx)
 
     async def play_next(self, ctx):
-        """Memainkan lagu berikutnya dalam antrian jika ada."""
         if ctx.guild.id in self.queues and self.queues[ctx.guild.id]:
             next_url, title = self.queues[ctx.guild.id].pop(0)
             FFMPEG_OPTIONS = {'options': '-vn'}
@@ -76,40 +71,36 @@ class MusicCog(commands.Cog):
 
     @commands.command(name="pause")
     async def pause(self, ctx):
-        """Pause musik yang sedang diputar."""
         if ctx.guild.id in self.voice_clients and self.voice_clients[ctx.guild.id].is_playing():
             self.voice_clients[ctx.guild.id].pause()
             await ctx.send("⏸️ Music paused.")
         else:
-            await ctx.send("❌ No music is playing.")
+            await ctx.send("❌ No music is playing!")
 
     @commands.command(name="resume")
     async def resume(self, ctx):
-        """Lanjutkan musik yang dipause."""
         if ctx.guild.id in self.voice_clients and self.voice_clients[ctx.guild.id].is_paused():
             self.voice_clients[ctx.guild.id].resume()
             await ctx.send("▶️ Music resumed.")
         else:
-            await ctx.send("❌ No music is paused.")
+            await ctx.send("❌ No music is paused!")
 
     @commands.command(name="stop")
     async def stop(self, ctx):
-        """Hentikan pemutaran musik dan kosongkan antrian."""
         if ctx.guild.id in self.voice_clients and self.voice_clients[ctx.guild.id].is_playing():
             self.voice_clients[ctx.guild.id].stop()
             self.queues[ctx.guild.id] = []
             await ctx.send("⏹️ Music stopped.")
         else:
-            await ctx.send("❌ No music is playing.")
+            await ctx.send("❌ No music is playing!")
 
     @commands.command(name="skip")
     async def skip(self, ctx):
-        """Melewati lagu yang sedang diputar."""
         if ctx.guild.id in self.voice_clients and self.voice_clients[ctx.guild.id].is_playing():
-            self.voice_clients[ctx.guild.id].stop()  # Ini akan memicu play_next melalui callback
+            self.voice_clients[ctx.guild.id].stop()
             await ctx.send("⏭️ Skipped the current track.")
         else:
-            await ctx.send("❌ No music is playing.")
+            await ctx.send("❌ No music is playing!")
 
 async def setup(bot):
     await bot.add_cog(MusicCog(bot))
