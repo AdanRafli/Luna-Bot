@@ -6,6 +6,7 @@ import logging
 
 # Logging setup
 logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger("music")
 
 class Music(commands.Cog):
