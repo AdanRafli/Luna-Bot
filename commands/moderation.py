@@ -22,74 +22,9 @@ xp_data = load_xp()
 class Moderation(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
+        self.waiting_list = []  # Antrian minigame
 
-    # Create Role
-    @commands.command()
-    @commands.has_permissions(manage_roles=True)
-    async def createrole(self, ctx, name: str, color: discord.Color = discord.Color.default()):
-        guild = ctx.guild
-        await guild.create_role(name=name, color=color)
-        await ctx.send(f"✅ Role `{name}` created successfully!")
-
-    # Create Channel
-    @commands.command()
-    @commands.has_permissions(manage_channels=True)
-    async def createchannel(self, ctx, name: str, channel_type: str = "text"):
-        guild = ctx.guild
-        if channel_type.lower() == "voice":
-            await guild.create_voice_channel(name)
-        else:
-            await guild.create_text_channel(name)
-        await ctx.send(f"✅ Channel `{name}` created successfully!")
-
-    # Kick Member
-    @commands.command()
-    @commands.has_permissions(kick_members=True)
-    async def kick(self, ctx, member: discord.Member, *, reason=None):
-        await member.kick(reason=reason)
-        await ctx.send(f"✅ {member.name} has been kicked!")
-
-    # Ban Member
-    @commands.command()
-    @commands.has_permissions(ban_members=True)
-    async def ban(self, ctx, member: discord.Member, *, reason=None):
-        await member.ban(reason=reason)
-        await ctx.send(f"✅ {member.name} has been banned!")
-
-    # Unban Member
-    @commands.command()
-    @commands.has_permissions(ban_members=True)
-    async def unban(self, ctx, *, member_name):
-        banned_users = await ctx.guild.bans()
-        for ban_entry in banned_users:
-            user = ban_entry.user
-            if user.name == member_name:
-                await ctx.guild.unban(user)
-                await ctx.send(f"✅ {user.name} has been unbanned!")
-                return
-
-    # Mute Member
-    @commands.command()
-    @commands.has_permissions(manage_roles=True)
-    async def mute(self, ctx, member: discord.Member):
-        role = discord.utils.get(ctx.guild.roles, name="Muted")
-        if not role:
-            role = await ctx.guild.create_role(name="Muted")
-            for channel in ctx.guild.channels:
-                await channel.set_permissions(role, send_messages=False, speak=False)
-        await member.add_roles(role)
-        await ctx.send(f"✅ {member.mention} has been muted!")
-
-    # Unmute Member
-    @commands.command()
-    @commands.has_permissions(manage_roles=True)
-    async def unmute(self, ctx, member: discord.Member):
-        role = discord.utils.get(ctx.guild.roles, name="Muted")
-        if role in member.roles:
-            await member.remove_roles(role)
-            await ctx.send(f"✅ {member.mention} has been unmuted!")
-
-    # XP System
+    # ======================== SISTEM LEVEL ========================
     @commands.Cog.listener()
     async def on_message(self, message):
         if message.author.bot:
@@ -112,7 +47,90 @@ class Moderation(commands.Cog):
         embed = discord.Embed(title="🏆 XP Leaderboard", description=leaderboard_text, color=discord.Color.gold())
         await ctx.send(embed=embed)
 
-    # Mini Game: Guess the Number
+    # ======================== PEMBUATAN ROLE ========================
+    @commands.command()
+    @commands.has_permissions(manage_roles=True)
+    async def createrole(self, ctx, name: str, color: discord.Color = discord.Color.default()):
+        guild = ctx.guild
+        await guild.create_role(name=name, color=color)
+        await ctx.send(f"✅ Role `{name}` created successfully!")
+
+    # ======================== PEMBUATAN CHANNEL ========================
+    @commands.command()
+    @commands.has_permissions(manage_channels=True)
+    async def createchannel(self, ctx, name: str, channel_type: str = "text"):
+        guild = ctx.guild
+        if channel_type.lower() == "voice":
+            await guild.create_voice_channel(name)
+        else:
+            await guild.create_text_channel(name)
+        await ctx.send(f"✅ Channel `{name}` created successfully!")
+
+    # ======================== FITUR MODERASI ========================
+    @commands.command()
+    @commands.has_permissions(kick_members=True)
+    async def kick(self, ctx, member: discord.Member, *, reason=None):
+        await member.kick(reason=reason)
+        await ctx.send(f"✅ {member.name} has been kicked!")
+
+    @commands.command()
+    @commands.has_permissions(ban_members=True)
+    async def ban(self, ctx, member: discord.Member, *, reason=None):
+        await member.ban(reason=reason)
+        await ctx.send(f"✅ {member.name} has been banned!")
+
+    @commands.command()
+    @commands.has_permissions(ban_members=True)
+    async def unban(self, ctx, *, member_name):
+        banned_users = await ctx.guild.bans()
+        for ban_entry in banned_users:
+            user = ban_entry.user
+            if user.name == member_name:
+                await ctx.guild.unban(user)
+                await ctx.send(f"✅ {user.name} has been unbanned!")
+                return
+
+    @commands.command()
+    @commands.has_permissions(manage_roles=True)
+    async def mute(self, ctx, member: discord.Member):
+        role = discord.utils.get(ctx.guild.roles, name="Muted")
+        if not role:
+            role = await ctx.guild.create_role(name="Muted")
+            for channel in ctx.guild.channels:
+                await channel.set_permissions(role, send_messages=False, speak=False)
+        await member.add_roles(role)
+        await ctx.send(f"✅ {member.mention} has been muted!")
+
+    @commands.command()
+    @commands.has_permissions(manage_roles=True)
+    async def unmute(self, ctx, member: discord.Member):
+        role = discord.utils.get(ctx.guild.roles, name="Muted")
+        if role in member.roles:
+            await member.remove_roles(role)
+            await ctx.send(f"✅ {member.mention} has been unmuted!")
+
+    # ======================== MINIGAME WAITING LIST ========================
+    @commands.command()
+    async def join_game(self, ctx):
+        if ctx.author.id in self.waiting_list:
+            await ctx.send("❌ Kamu sudah ada di antrian minigame!")
+            return
+        
+        self.waiting_list.append(ctx.author.id)
+        await ctx.send(f"✅ {ctx.author.name} telah bergabung ke antrian minigame ({len(self.waiting_list)} pemain).")
+        
+        if len(self.waiting_list) >= 2:
+            await self.start_game(ctx)
+
+    async def start_game(self, ctx):
+        await ctx.send("🎮 Minigame dimulai!")
+        players = [self.bot.get_user(uid) for uid in self.waiting_list]
+        winner = random.choice(players)
+        
+        await ctx.send(f"🏆 Pemenangnya adalah **{winner.name}**! 🎉")
+        self.waiting_list.clear()
+
+    # ======================== MINI GAME TEBAK ANGKA ========================
     @commands.command()
     async def guess(self, ctx):
         number = random.randint(1, 10)
