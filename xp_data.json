@@ -1,1 +1,9 @@
+def load_xp():
+    if os.path.exists(XP_FILE):
+        with open(XP_FILE, "r") as f:
+            try:
+                return json.load(f)
+            except json.JSONDecodeError:
+                return {}  # Jika file kosong atau rusak, kembalikan dictionary kosong
+    return {}
 
