@@ -11,23 +11,23 @@ def load_xp():
     if os.path.exists(XP_FILE):
         with open(XP_FILE, "r") as f:
             content = f.read().strip()
-            if not content:  # Jika file kosong
-                print("xp_data.json kosong! Menggunakan data default.")
-                return {}  # Menggunakan dict kosong sebagai default
+            if not content:
+                return {}
             try:
-                return json.loads(content)  # Memuat JSON
-            except json.JSONDecodeError as e:
-                print(f"Error JSON: {e}")
-                return {}  # Menggunakan dict kosong jika ada error
+                return json.loads(content)
+            except json.JSONDecodeError:
+                return {}
     return {}
 
+def save_xp(data):
+    with open(XP_FILE, "w") as f:
+        json.dump(data, f)
+
 xp_data = load_xp()
-print("Data XP berhasil dimuat:", xp_data)
 
 class Moderation(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        self.waiting_list = []  # Antrian minigame
 
     # ======================== SISTEM LEVEL ========================
     @commands.Cog.listener()
@@ -57,19 +57,15 @@ class Moderation(commands.Cog):
     @commands.has_permissions(manage_roles=True)
     async def createrole(self, ctx, name: str, color: discord.Color = None, mentionable: bool = False, *permissions):
         guild = ctx.guild
-
-        # Default permissions (bisa kirim pesan & masuk voice channel)
         perms = discord.Permissions.none()
         perms.send_messages = True
         perms.read_messages = True
         perms.connect = True
         perms.speak = True
 
-        # Jika tidak ada warna diberikan, gunakan warna putih
         if color is None:
             color = discord.Color.default()
 
-        # Mapping izin yang bisa ditentukan
         permission_map = {
             "admin": "administrator",
             "kick": "kick_members",
@@ -87,15 +83,12 @@ class Moderation(commands.Cog):
             "speak": "speak"
         }
 
-        # Tambahkan izin tambahan yang diberikan oleh user
         for perm in permissions:
             if perm in permission_map:
                 setattr(perms, permission_map[perm], True)
 
-        # Buat role dengan pengaturan yang telah ditentukan
         role = await guild.create_role(name=name, color=color, mentionable=mentionable, permissions=perms)
-        await ctx.send(f"✅ Role `{name}` created successfully! Permissions: {', '.join(permissions) if permissions else 'Default (Basic Permissions)'}")
-    
+        await ctx.send(f"✅ Role `{name}` created successfully!")
 
     # ======================== FITUR MODERASI ========================
     @commands.command()
@@ -109,34 +102,37 @@ class Moderation(commands.Cog):
             await ctx.send(f"⚠ Role `{role_name}` tidak ditemukan.")
 
     @commands.command()
-    @commands.has_permissions(manage_roles=True)
-    async def renamerole(self, ctx, old_name: str, *, new_name: str):
-        role = discord.utils.get(ctx.guild.roles, name=old_name)
-        if role:
-            await role.edit(name=new_name)
-            await ctx.send(f"✅ Role `{old_name}` telah diganti menjadi `{new_name}`!")
-        else:
-            await ctx.send(f"⚠ Role `{old_name}` tidak ditemukan.")
+    @commands.has_permissions(manage_messages=True)
+    async def clear(self, ctx, amount: int):
+        await ctx.channel.purge(limit=amount + 1)
+        await ctx.send(f"✅ {amount} pesan telah dihapus!", delete_after=5)
 
     @commands.command()
-    @commands.has_permissions(manage_roles=True)
-    async def addrole(self, ctx, member: discord.Member, *, role_name: str):
-        role = discord.utils.get(ctx.guild.roles, name=role_name)
-        if role:
-            await member.add_roles(role)
-            await ctx.send(f"✅ {member.mention} sekarang memiliki role `{role_name}`!")
-        else:
-            await ctx.send(f"⚠ Role `{role_name}` tidak ditemukan.")
+    @commands.has_permissions(manage_channels=True)
+    async def createchannel(self, ctx, channel_type: str, name: str, *permissions):
+        guild = ctx.guild
+        overwrites = {guild.default_role: discord.PermissionOverwrite(read_messages=False)}
+        permission_map = {
+            "send_messages": "send_messages",
+            "manage_messages": "manage_messages",
+            "connect": "connect",
+            "speak": "speak",
+            "view_channel": "view_channel",
+        }
 
-    @commands.command()
-    @commands.has_permissions(manage_roles=True)
-    async def removerole(self, ctx, member: discord.Member, *, role_name: str):
-        role = discord.utils.get(ctx.guild.roles, name=role_name)
-        if role:
-            await member.remove_roles(role)
-            await ctx.send(f"✅ Role `{role_name}` telah dihapus dari {member.mention}!")
+        for perm in permissions:
+            if perm in permission_map:
+                overwrites[guild.default_role] = discord.PermissionOverwrite(**{permission_map[perm]: True})
+
+        if channel_type.lower() == "text":
+            await guild.create_text_channel(name, overwrites=overwrites)
+        elif channel_type.lower() == "voice":
+            await guild.create_voice_channel(name, overwrites=overwrites)
         else:
-            await ctx.send(f"⚠ Role `{role_name}` tidak ditemukan.")
+            await ctx.send("⚠ Tipe channel tidak valid. Gunakan `text` atau `voice`.")
+            return
+
+        await ctx.send(f"✅ Channel `{name}` berhasil dibuat!")
 
     @commands.command()
     @commands.has_permissions(kick_members=True)
@@ -160,45 +156,6 @@ class Moderation(commands.Cog):
                 await channel.set_permissions(role, send_messages=False, speak=False)
         await member.add_roles(role)
         await ctx.send(f"✅ {member.mention} has been muted!")
-
-    # ======================== MINIGAME WAITING LIST ========================
-    @commands.command()
-    async def join_game(self, ctx):
-        if ctx.author.id in self.waiting_list:
-            await ctx.send("❌ Kamu sudah ada di antrian minigame!")
-            return
-        
-        self.waiting_list.append(ctx.author.id)
-        await ctx.send(f"✅ {ctx.author.name} telah bergabung ke antrian minigame ({len(self.waiting_list)} pemain).")
-        
-        if len(self.waiting_list) >= 2:
-            await self.start_game(ctx)
-
-    async def start_game(self, ctx):
-        await ctx.send("🎮 Minigame dimulai!")
-        players = [self.bot.get_user(uid) for uid in self.waiting_list]
-        winner = random.choice(players)
-        
-        await ctx.send(f"🏆 Pemenangnya adalah **{winner.name}**! 🎉")
-        self.waiting_list.clear()
-
-    # ======================== MINI GAME TEBAK ANGKA ========================
-    @commands.command()
-    async def guess(self, ctx):
-        number = random.randint(1, 10)
-        await ctx.send("🎲 Guess a number between 1 and 10!")
-
-        def check(m):
-            return m.author == ctx.author and m.channel == ctx.channel and m.content.isdigit()
-
-        try:
-            msg = await self.bot.wait_for("message", check=check, timeout=10.0)
-            if int(msg.content) == number:
-                await ctx.send("✅ Correct! You guessed the number!")
-            else:
-                await ctx.send(f"❌ Wrong! The correct number was {number}.")
-        except asyncio.TimeoutError:
-            await ctx.send("⌛ Time's up! You didn't guess in time.")
 
 async def setup(bot):
     await bot.add_cog(Moderation(bot))
