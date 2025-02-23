@@ -91,6 +91,47 @@ async def createrole(self, ctx, name: str, color: discord.Color = None, mentiona
     role = await guild.create_role(name=name, color=color, mentionable=mentionable, permissions=perms)
     await ctx.send(f"✅ Role `{name}` created successfully! Permissions: {', '.join(permissions) if permissions else 'Default (Basic Permissions)'}")
 
+    # ======================== FITUR MODERASI ========================
+    @commands.command()
+@commands.has_permissions(manage_roles=True)
+async def deleterole(self, ctx, *, role_name: str):
+    role = discord.utils.get(ctx.guild.roles, name=role_name)
+    if role:
+        await role.delete()
+        await ctx.send(f"✅ Role `{role_name}` telah dihapus!")
+    else:
+        await ctx.send(f"⚠ Role `{role_name}` tidak ditemukan.")
+
+@commands.command()
+@commands.has_permissions(manage_roles=True)
+async def renamerole(self, ctx, old_name: str, *, new_name: str):
+    role = discord.utils.get(ctx.guild.roles, name=old_name)
+    if role:
+        await role.edit(name=new_name)
+        await ctx.send(f"✅ Role `{old_name}` telah diganti menjadi `{new_name}`!")
+    else:
+        await ctx.send(f"⚠ Role `{old_name}` tidak ditemukan.")
+
+@commands.command()
+@commands.has_permissions(manage_roles=True)
+async def addrole(self, ctx, member: discord.Member, *, role_name: str):
+    role = discord.utils.get(ctx.guild.roles, name=role_name)
+    if role:
+        await member.add_roles(role)
+        await ctx.send(f"✅ {member.mention} sekarang memiliki role `{role_name}`!")
+    else:
+        await ctx.send(f"⚠ Role `{role_name}` tidak ditemukan.")
+
+@commands.command()
+@commands.has_permissions(manage_roles=True)
+async def removerole(self, ctx, member: discord.Member, *, role_name: str):
+    role = discord.utils.get(ctx.guild.roles, name=role_name)
+    if role:
+        await member.remove_roles(role)
+        await ctx.send(f"✅ Role `{role_name}` telah dihapus dari {member.mention}!")
+    else:
+        await ctx.send(f"⚠ Role `{role_name}` tidak ditemukan.")
+
 
     # ======================== FITUR MODERASI ========================
     @commands.command()
