@@ -5,20 +5,24 @@ import random
 import json
 import os
 
-# Load XP data
 XP_FILE = "xp_data.json"
 
 def load_xp():
     if os.path.exists(XP_FILE):
         with open(XP_FILE, "r") as f:
-            return json.load(f)
+            content = f.read().strip()
+            if not content:  # Jika file kosong
+                print("xp_data.json kosong! Menggunakan data default.")
+                return {}  # Menggunakan dict kosong sebagai default
+            try:
+                return json.loads(content)  # Memuat JSON
+            except json.JSONDecodeError as e:
+                print(f"Error JSON: {e}")
+                return {}  # Menggunakan dict kosong jika ada error
     return {}
 
-def save_xp(data):
-    with open(XP_FILE, "w") as f:
-        json.dump(data, f, indent=4)
-
 xp_data = load_xp()
+print("Data XP berhasil dimuat:", xp_data)
 
 class Moderation(commands.Cog):
     def __init__(self, bot):
