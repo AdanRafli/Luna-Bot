@@ -1,11 +1,19 @@
-def load_xp():
-    if os.path.exists(XP_FILE):
-        with open(XP_FILE, "r") as f:
-            try:
-                return json.load(f)
-            except json.JSONDecodeError:
-                return {}  # Jika file kosong atau rusak, return dict kosong
 def save_xp(data):
     with open(XP_FILE, "w") as f:
         json.dump(data, f, indent=4)
-    return {}
+
+def load_xp():
+    if not os.path.exists(XP_FILE):
+        with open(XP_FILE, "w") as f:
+            json.dump({}, f)  # Buat file dengan dictionary kosong
+
+    with open(XP_FILE, "r") as f:
+        content = f.read().strip()
+        if not content:  # Jika file kosong
+            print("xp_data.json kosong! Menggunakan data default.")
+            return {}  # Menggunakan dict kosong sebagai default
+        try:
+            return json.loads(content)  # Memuat JSON
+        except json.JSONDecodeError as e:
+            print(f"Error JSON: {e}")
+            return {}  # Gunakan dict kosong jika error
