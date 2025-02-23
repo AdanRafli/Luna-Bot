@@ -50,47 +50,48 @@ class Moderation(commands.Cog):
 
     # ======================== PEMBUATAN ROLE ========================
     @commands.command()
-    @commands.has_permissions(manage_roles=True)
-    async def createrole(self, ctx, name: str, color: discord.Color = None, mentionable: bool = False, *permissions):
-        guild = ctx.guild
+@commands.has_permissions(manage_roles=True)
+async def createrole(self, ctx, name: str, color: discord.Color = None, mentionable: bool = False, *permissions):
+    guild = ctx.guild
 
-        # Default permissions (bisa kirim pesan & masuk voice channel)
-        perms = discord.Permissions.none()
-        perms.send_messages = True
-        perms.read_messages = True
-        perms.connect = True
-        perms.speak = True
+    # Default permissions (bisa kirim pesan & masuk voice channel)
+    perms = discord.Permissions.none()
+    perms.send_messages = True
+    perms.read_messages = True
+    perms.connect = True
+    perms.speak = True
 
-        # Jika tidak ada warna diberikan, gunakan warna putih
-        if color is None:
-            color = discord.Color.default()
+    # Jika tidak ada warna diberikan, gunakan warna putih
+    if color is None:
+        color = discord.Color.default()
 
-        # Mapping izin yang bisa ditentukan
-        permission_map = {
-            "admin": "administrator",
-            "kick": "kick_members",
-            "ban": "ban_members",
-            "manage_roles": "manage_roles",
-            "manage_channels": "manage_channels",
-            "view_audit": "view_audit_log",
-            "send_messages": "send_messages",
-            "manage_messages": "manage_messages",
-            "mute_members": "mute_members",
-            "deafen_members": "deafen_members",
-            "move_members": "move_members",
-            "mention_everyone": "mention_everyone",
-            "connect": "connect",
-            "speak": "speak"
-        }
+    # Mapping izin yang bisa ditentukan
+    permission_map = {
+        "admin": "administrator",
+        "kick": "kick_members",
+        "ban": "ban_members",
+        "manage_roles": "manage_roles",
+        "manage_channels": "manage_channels",
+        "view_audit": "view_audit_log",
+        "send_messages": "send_messages",
+        "manage_messages": "manage_messages",
+        "mute_members": "mute_members",
+        "deafen_members": "deafen_members",
+        "move_members": "move_members",
+        "mention_everyone": "mention_everyone",
+        "connect": "connect",
+        "speak": "speak"
+    }
 
-        # Tambahkan izin tambahan yang diberikan oleh user
-        for perm in permissions:
-            if perm in permission_map:
-                setattr(perms, permission_map[perm], True)
+    # Tambahkan izin tambahan yang diberikan oleh user
+    for perm in permissions:
+        if perm in permission_map:
+            setattr(perms, permission_map[perm], True)
 
-        # Buat role dengan pengaturan yang telah ditentukan
-        role = await guild.create_role(name=name, color=color, mentionable=mentionable, permissions=perms)
-        await ctx.send(f"✅ Role `{name}` created successfully! Permissions: {', '.join(permissions) if permissions else 'Default (Basic Permissions)'}")
+    # Buat role dengan pengaturan yang telah ditentukan
+    role = await guild.create_role(name=name, color=color, mentionable=mentionable, permissions=perms)
+    await ctx.send(f"✅ Role `{name}` created successfully! Permissions: {', '.join(permissions) if permissions else 'Default (Basic Permissions)'}")
+
 
     # ======================== FITUR MODERASI ========================
     @commands.command()
