@@ -4,6 +4,5 @@ def load_xp():
             try:
                 return json.load(f)
             except json.JSONDecodeError:
-                return {}  # Jika file kosong atau rusak, kembalikan dictionary kosong
+                return {}  # Jika file kosong atau rusak, return dict kosong
     return {}
-
