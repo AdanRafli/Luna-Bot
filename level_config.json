@@ -1,0 +1,16 @@
+{
+  "level_config": {
+    "max_level": 100,
+    "exp_per_level": 500,
+    "exp_gain": {
+      "message": 10,
+      "reaction": 5,
+      "voice_chat": 20
+    }
+  },
+  "role_rewards": {
+  },
+  "level_messages": {
+  },
+  "notif_channel": 123456789012345678
+}
