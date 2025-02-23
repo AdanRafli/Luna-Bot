@@ -5,4 +5,7 @@ def load_xp():
                 return json.load(f)
             except json.JSONDecodeError:
                 return {}  # Jika file kosong atau rusak, return dict kosong
+def save_xp(data):
+    with open(XP_FILE, "w") as f:
+        json.dump(data, f, indent=4)
     return {}
