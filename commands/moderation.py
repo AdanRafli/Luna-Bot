@@ -49,8 +49,8 @@ class Moderation(commands.Cog):
 
     # ======================== PEMBUATAN ROLE ========================
     @commands.command()
-@commands.has_permissions(manage_roles=True)
-async def createrole(self, ctx, name: str, color: discord.Color = None, mentionable: bool = False, *permissions):
+    @commands.has_permissions(manage_roles=True)
+    async def createrole(self, ctx, name: str, color: discord.Color = None, mentionable: bool = False, *permissions):
     guild = ctx.guild
 
     # Default permissions (bisa kirim pesan & masuk voice channel)
