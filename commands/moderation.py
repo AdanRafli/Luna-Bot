@@ -7,6 +7,7 @@ import os
 
 # Load XP data
 XP_FILE = "xp_data.json"
+
 def load_xp():
     if os.path.exists(XP_FILE):
         with open(XP_FILE, "r") as f:
@@ -51,89 +52,87 @@ class Moderation(commands.Cog):
     @commands.command()
     @commands.has_permissions(manage_roles=True)
     async def createrole(self, ctx, name: str, color: discord.Color = None, mentionable: bool = False, *permissions):
-    guild = ctx.guild
+        guild = ctx.guild
 
-    # Default permissions (bisa kirim pesan & masuk voice channel)
-    perms = discord.Permissions.none()
-    perms.send_messages = True
-    perms.read_messages = True
-    perms.connect = True
-    perms.speak = True
+        # Default permissions (bisa kirim pesan & masuk voice channel)
+        perms = discord.Permissions.none()
+        perms.send_messages = True
+        perms.read_messages = True
+        perms.connect = True
+        perms.speak = True
 
-    # Jika tidak ada warna diberikan, gunakan warna putih
-    if color is None:
-        color = discord.Color.default()
+        # Jika tidak ada warna diberikan, gunakan warna putih
+        if color is None:
+            color = discord.Color.default()
 
-    # Mapping izin yang bisa ditentukan
-    permission_map = {
-        "admin": "administrator",
-        "kick": "kick_members",
-        "ban": "ban_members",
-        "manage_roles": "manage_roles",
-        "manage_channels": "manage_channels",
-        "view_audit": "view_audit_log",
-        "send_messages": "send_messages",
-        "manage_messages": "manage_messages",
-        "mute_members": "mute_members",
-        "deafen_members": "deafen_members",
-        "move_members": "move_members",
-        "mention_everyone": "mention_everyone",
-        "connect": "connect",
-        "speak": "speak"
-    }
+        # Mapping izin yang bisa ditentukan
+        permission_map = {
+            "admin": "administrator",
+            "kick": "kick_members",
+            "ban": "ban_members",
+            "manage_roles": "manage_roles",
+            "manage_channels": "manage_channels",
+            "view_audit": "view_audit_log",
+            "send_messages": "send_messages",
+            "manage_messages": "manage_messages",
+            "mute_members": "mute_members",
+            "deafen_members": "deafen_members",
+            "move_members": "move_members",
+            "mention_everyone": "mention_everyone",
+            "connect": "connect",
+            "speak": "speak"
+        }
 
-    # Tambahkan izin tambahan yang diberikan oleh user
-    for perm in permissions:
-        if perm in permission_map:
-            setattr(perms, permission_map[perm], True)
+        # Tambahkan izin tambahan yang diberikan oleh user
+        for perm in permissions:
+            if perm in permission_map:
+                setattr(perms, permission_map[perm], True)
 
-    # Buat role dengan pengaturan yang telah ditentukan
-    role = await guild.create_role(name=name, color=color, mentionable=mentionable, permissions=perms)
-    await ctx.send(f"✅ Role `{name}` created successfully! Permissions: {', '.join(permissions) if permissions else 'Default (Basic Permissions)'}")
+        # Buat role dengan pengaturan yang telah ditentukan
+        role = await guild.create_role(name=name, color=color, mentionable=mentionable, permissions=perms)
+        await ctx.send(f"✅ Role `{name}` created successfully! Permissions: {', '.join(permissions) if permissions else 'Default (Basic Permissions)'}")
 
     # ======================== FITUR MODERASI ========================
     @commands.command()
-@commands.has_permissions(manage_roles=True)
-async def deleterole(self, ctx, *, role_name: str):
-    role = discord.utils.get(ctx.guild.roles, name=role_name)
-    if role:
-        await role.delete()
-        await ctx.send(f"✅ Role `{role_name}` telah dihapus!")
-    else:
-        await ctx.send(f"⚠ Role `{role_name}` tidak ditemukan.")
+    @commands.has_permissions(manage_roles=True)
+    async def deleterole(self, ctx, *, role_name: str):
+        role = discord.utils.get(ctx.guild.roles, name=role_name)
+        if role:
+            await role.delete()
+            await ctx.send(f"✅ Role `{role_name}` telah dihapus!")
+        else:
+            await ctx.send(f"⚠ Role `{role_name}` tidak ditemukan.")
 
-@commands.command()
-@commands.has_permissions(manage_roles=True)
-async def renamerole(self, ctx, old_name: str, *, new_name: str):
-    role = discord.utils.get(ctx.guild.roles, name=old_name)
-    if role:
-        await role.edit(name=new_name)
-        await ctx.send(f"✅ Role `{old_name}` telah diganti menjadi `{new_name}`!")
-    else:
-        await ctx.send(f"⚠ Role `{old_name}` tidak ditemukan.")
+    @commands.command()
+    @commands.has_permissions(manage_roles=True)
+    async def renamerole(self, ctx, old_name: str, *, new_name: str):
+        role = discord.utils.get(ctx.guild.roles, name=old_name)
+        if role:
+            await role.edit(name=new_name)
+            await ctx.send(f"✅ Role `{old_name}` telah diganti menjadi `{new_name}`!")
+        else:
+            await ctx.send(f"⚠ Role `{old_name}` tidak ditemukan.")
 
-@commands.command()
-@commands.has_permissions(manage_roles=True)
-async def addrole(self, ctx, member: discord.Member, *, role_name: str):
-    role = discord.utils.get(ctx.guild.roles, name=role_name)
-    if role:
-        await member.add_roles(role)
-        await ctx.send(f"✅ {member.mention} sekarang memiliki role `{role_name}`!")
-    else:
-        await ctx.send(f"⚠ Role `{role_name}` tidak ditemukan.")
+    @commands.command()
+    @commands.has_permissions(manage_roles=True)
+    async def addrole(self, ctx, member: discord.Member, *, role_name: str):
+        role = discord.utils.get(ctx.guild.roles, name=role_name)
+        if role:
+            await member.add_roles(role)
+            await ctx.send(f"✅ {member.mention} sekarang memiliki role `{role_name}`!")
+        else:
+            await ctx.send(f"⚠ Role `{role_name}` tidak ditemukan.")
 
-@commands.command()
-@commands.has_permissions(manage_roles=True)
-async def removerole(self, ctx, member: discord.Member, *, role_name: str):
-    role = discord.utils.get(ctx.guild.roles, name=role_name)
-    if role:
-        await member.remove_roles(role)
-        await ctx.send(f"✅ Role `{role_name}` telah dihapus dari {member.mention}!")
-    else:
-        await ctx.send(f"⚠ Role `{role_name}` tidak ditemukan.")
+    @commands.command()
+    @commands.has_permissions(manage_roles=True)
+    async def removerole(self, ctx, member: discord.Member, *, role_name: str):
+        role = discord.utils.get(ctx.guild.roles, name=role_name)
+        if role:
+            await member.remove_roles(role)
+            await ctx.send(f"✅ Role `{role_name}` telah dihapus dari {member.mention}!")
+        else:
+            await ctx.send(f"⚠ Role `{role_name}` tidak ditemukan.")
 
-
-    # ======================== FITUR MODERASI ========================
     @commands.command()
     @commands.has_permissions(kick_members=True)
     async def kick(self, ctx, member: discord.Member, *, reason=None):
@@ -147,17 +146,6 @@ async def removerole(self, ctx, member: discord.Member, *, role_name: str):
         await ctx.send(f"✅ {member.name} has been banned!")
 
     @commands.command()
-    @commands.has_permissions(ban_members=True)
-    async def unban(self, ctx, *, member_name):
-        banned_users = await ctx.guild.bans()
-        for ban_entry in banned_users:
-            user = ban_entry.user
-            if user.name == member_name:
-                await ctx.guild.unban(user)
-                await ctx.send(f"✅ {user.name} has been unbanned!")
-                return
-
-    @commands.command()
     @commands.has_permissions(manage_roles=True)
     async def mute(self, ctx, member: discord.Member):
         role = discord.utils.get(ctx.guild.roles, name="Muted")
@@ -167,14 +155,6 @@ async def removerole(self, ctx, member: discord.Member, *, role_name: str):
                 await channel.set_permissions(role, send_messages=False, speak=False)
         await member.add_roles(role)
         await ctx.send(f"✅ {member.mention} has been muted!")
-
-    @commands.command()
-    @commands.has_permissions(manage_roles=True)
-    async def unmute(self, ctx, member: discord.Member):
-        role = discord.utils.get(ctx.guild.roles, name="Muted")
-        if role in member.roles:
-            await member.remove_roles(role)
-            await ctx.send(f"✅ {member.mention} has been unmuted!")
 
     # ======================== MINIGAME WAITING LIST ========================
     @commands.command()
